@@ -1,0 +1,490 @@
+// Commerce.cpp : This file contains the 'main' function. Program execution begins and ends there.
+#include <iostream>
+#include <string>
+#include <map>
+#include <unordered_set>
+#include <list>
+using namespace std;
+
+// Where the customer holds products that they hopefully will buy.
+class Cart
+{
+    //Movie ID linked to a quantity
+     map <uint64_t,uint16_t> Movies_In_Cart;
+public:
+    void Display()
+    {
+        cout << "Cart\n";
+        cout << "Here's a list of movies in your cart.\n----------------------------------------------------------------------------------------\n";
+        for (const auto& pair : Movies_In_Cart)
+        {
+            inventory.Display(pair.first,pair.second);
+        }
+        cout << "----------------------------------------------------------------------------------------\n";
+        
+    }
+
+    bool Is_Cart_Empty()
+    {
+        return Movies_In_Cart.size() == 0;
+    }
+
+    void Add(uint64_t Product_ID)
+    {
+        Movies_In_Cart.insert(Product_ID);
+    }
+
+    void Add(uint64_t Product_ID)
+    {
+        Movies_In_Cart.insert(Product_ID);
+    }
+
+    void Remove(uint64_t Product_ID)
+    {
+        Movies_In_Cart.erase(Product_ID);
+    }
+
+    void Checkout()
+    {
+
+    }
+};
+
+class Order
+{
+    uint64_t ID;
+    // Product tied to quantity ordered.
+    map <uint64_t, uint32_t> Products;
+    uint64_t Total_Cost;
+    string Date;
+
+    //Card Used
+    string Name_On_Card, Expiration_Date;
+    uint32_t Number;
+};
+
+class Customer
+{
+public:
+    string Name, Address, Email, Password;
+    uint32_t Phone_Number;
+
+    // Card Variables.
+    string Name_On_Card, Expiration_Date;
+    uint32_t Number;
+    uint8_t CVV;
+
+    Cart cart;
+
+    list<Order> Order_History;
+
+    void Display_History()
+    {
+        if (Order_History.empty())
+        {
+            cout << "You have no order history." << endl;
+        }
+        else
+        {
+            cout << Order_History << endl;
+        }
+    }
+
+   bool Correct_Password(string Password)
+   {
+       return (Password == this->Password);
+   }
+};
+
+enum Genre
+{
+    Romance,
+    Action
+    SciFi,
+    Horror,
+    Romance_Action
+};
+
+enum Director
+{
+    George_Lucas,
+    Neil_Burger,
+    Jon_Favreau
+};
+
+//These are all physical movies sent
+class Movie_Product
+{
+    //7 Variables in total
+public:
+    string Name, Description, Year, Director;
+    Genre genre;
+    float Cost;
+    uint64_t Quantity_Left;
+
+    Movie_Product() {};
+    Movie_Product(string Name, string Description,string Director, Genre Genre, uint32_t Cost, uint64_t Quantity,uint16_t Year)
+    {
+        this->Name = Name;
+        this->Description = Description;
+        this->Cost = Cost;
+        this->Quantity_Left = Quantity;
+        this->genre = genre;
+    }
+};
+
+class Inventory
+{
+    // Product IDs tied to product details.
+    map <uint64_t, Movie_Product> Products;
+public:
+    Inventory()
+    {
+            this->Products.insert(pair<uint64_t, Movie_Product>(1, Movie_Product("Hunger Games", "Fighting in a distopia", "Gary Ross & Francis Lawrence", Romance, 29.99, 1000, 2008)));
+            this->Products.insert(pair<uint64_t, Movie_Product>(1, Movie_Product("Attack of the Clones", "Space Fighting", "George Lucas", SciFi, 39.99, 400, 2008)));
+            this->Products.insert(pair<uint64_t, Movie_Product>(1, Movie_Product("The Lord of The Rings: The Fellowship of The Ring", "A group of mythical creatures takes a long hike to destroy some jewelry", "Peter Jackson", SciFi, 44.99, 600,2001)));
+            this->Products.insert(pair<uint64_t, Movie_Product>(1, Movie_Product("The Cabin in The Woods", "A group of friends is tortured for a game", "Drew Goddard", Horror, 44.99, 1060, 2012)));
+            this->Products.insert(pair<uint64_t, Movie_Product>(1, Movie_Product("Encanto", "Family-centered generational trauma set to music", "Bryon Howard & Jared Bush", Animated_Musical, 29.99, 164,2021)));
+            this->Products.insert(pair<uint64_t, Movie_Product>(1, Movie_Product("John Wick", "A retired assassin seeks vengence when a thug stole his puppy", "Chad Stahelski", Action, 34.99, 380, 2014)));
+            this->Products.insert(pair<uint64_t, Movie_Product>(1, Movie_Product("Spirited Away", "Little girl is forced into child labor after parents won't stop eating", "Hayao Miyazaki", Anime_Fantasy, 49.99, 6, 2002)));
+            this->Products.insert(pair<uint64_t, Movie_Product>(1, Movie_Product("50 First Dates", "A man falls for a girl with short term memory loss, and has to woo her every day", "Peter Segal", Romance, 24.99, 500, 2004)));
+            this->Products.insert(pair<uint64_t, Movie_Product>(1, Movie_Product("", "", "", , , 600, 2001)));
+            this->Products.insert(pair<uint64_t, Movie_Product>(1, Movie_Product(""   this->Products.insert(pair<uint64_t, Movie_Product>(1, Movie_Product("Spirited Away", "Little girl is forced into child labor after parents won't stop eating", "Hayao Miyazaki", Anime_Fantasy, 49.99, 6, 2002)));
+
+    
+    }       
+
+
+    bool Exists(uint64_t ID)
+    {
+        return Products.find(ID) == Products.end();
+    }
+    bool In_Stock(uint64_t ID)
+    {
+        return Exists(ID) && Products[ID].Quantity_Left > 0;
+    }
+    Genre Get_Genre(uint64_t ID)
+    {
+        return Products[ID].genre;
+    }
+    void Display()
+    {
+        cout << "Here's a list of all our movies.\n----------------------------------------------------------------------------------------\n";
+        for (const auto& pair : Products) 
+        {
+            cout << "\nID: " << pair.first;
+            cout << "\nName: " << pair.second.Name;
+            cout << "\nCost: $" << pair.second.Cost;
+            cout << "\nStock Left: $" << pair.second.Quantity_Left;
+            cout << "\nGenre: $" << pair.second.genre;
+            cout << "\nDescription: " << pair.second.Description << "\n";
+        }
+        cout << "----------------------------------------------------------------------------------------\n";
+    }
+    void Display(uint64_t ID, uint16_t Quantity)
+    {
+        if (Exists(ID))
+        {
+            Movie_Product movie = Products[ID];
+            cout << "\nID: " << ID;
+            cout << "\nName: " << movie.Name;
+            cout << "\nCost: $" << movie.Cost;
+            cout << "\nQuantity: $" << Quantity;
+            cout << "\nGenre: $" << movie.genre;
+            cout << "\nDescription: " << movie.Description << "\n";
+        }
+
+            
+    }
+    bool Add(Genre genre)
+    {
+
+    }
+    bool Add(Genre product)
+    {
+
+    }
+    bool Remove(Genre product)
+    {
+
+    }
+
+    bool Buy(uint64_t Product_ID)
+    {
+        if (Exists(Product_ID))
+        {
+            Movie_Product product = Products[Product_ID];
+
+            if (product.Quantity_Left > 0)
+            {
+                Products[Product_ID].Quantity_Left--;
+                return true;
+            }
+            
+        }
+        return false;
+    }
+
+    bool Buy(uint64_t Product_ID, uint32_t Quantity)
+    {
+        if (Exists(Product_ID))
+        {
+            Products[Product_ID].Quantity_Left-= Quantity;
+        }
+        return false;
+    }
+};
+
+// When you log in, the customer is set to this.
+Customer* Current_Customer = NULL;
+string Current_Email;
+
+// Email linked to customer account.
+map <string, Customer> Customers;
+
+enum Add_To_Cart_Report
+{
+    Customer_Nonexist,
+    Product_Nonexist,
+    Product_Out_Of_Stock,
+    Done
+};
+
+// Function to check to see if the user is signed in.
+bool Signed_In()
+{
+    return Current_Customer != NULL;
+}
+// Function to make sure the customer has created an account.
+bool Customer_Exists(string Email)
+{
+    return Customers.find(Email) != Customers.end();
+}
+
+// Choice 3 in the sign in menu: customer wants to add an item to their shopping cart.
+bool Add_To_Cart(uint64_t Product_ID)
+{
+    // If the customer exists,
+    if (Current_Customer != NULL)
+    {
+        Current_Customer->cart.Add(Product_ID); // Add that movie to the cart.
+        return true;
+    }
+    return false;
+}
+// Choice 8 in the sign in menu: customer wants to delete their account.
+bool Delete_Account()
+{
+    if (Signed_In()) // Makes sure the user is signed in.
+    {
+        cout << Current_Customer->Name << ", your account has been deleted.";
+        Customers.erase(Current_Email); // Deletes their email.
+        return true;
+    }
+    cout << "No one is signed in.";
+    return false;
+}
+// Choice 9 in the sign in menu: customer wants to sign out of their account.
+bool Signout()
+{
+    // If the user is signed in,
+    if (Current_Customer != NULL) 
+    {
+        cout << Current_Customer->Name << " has been signed out.";
+        Current_Customer = NULL; // No customer now.
+        Current_Email = ""; // No email address now.
+        return true;
+    }
+    else
+    {
+        cout << "You're not signed in.";
+        return false;
+    }
+}
+
+// Choice 1 on the start up menu: customer creating their account.
+bool Signup(string Email,Customer customer)
+{
+    bool New = !Customer_Exists(Email); // Customer doesn't already have an account.
+    // If the user doesn't already have an account,
+    if (New)
+    {
+        Customers.insert(pair<string, Customer>(Email, customer)); // Inserting the user's email into their account.
+        Current_Customer = &customer; // Setting the current customer to the new customer.
+        Current_Email = Email; // Setting the current customer's email address to the new customer's email address.
+        cout << customer.Name << " has been signed in.";
+    }
+    else cout << "A user already exists with that email, try loging in or signing up with a another email.";
+    return New;
+}
+// Choice 2 on the start up menu: customer signing in to their account.
+bool Signin(string Email, string Password)
+{
+    if (Customer_Exists(Email))
+    {
+        Customer customer = Customers[Email];
+        if (customer.Correct_Password(Password))
+        {
+            Current_Customer = &customer;
+            Current_Email = Email;
+            cout << customer.Name << " has been signed in.";
+            return true;
+        }
+        else
+        {
+            cout << "Password Incorrect";
+            return false;
+        }
+    }
+    cout << "User doesn't exist";
+    return false;
+}
+
+
+
+void Save()
+{
+
+}
+
+void Load()
+{
+
+}
+
+
+// Menu that shows up after the user has signed in.
+void Sign_In_Menu()
+{
+    string Command;
+    Inventory inventory;
+    Cart cart;
+    uint64_t movie;
+    
+    cout << "\nEnter 1 to view all the movies in inventory.\nEnter 2 to view all items in your shopping cart.\nEnter 3 to add a movie to your shopping cart.\nEnter 4 to remove a movie from your shopping cart.\nEnter 5 to checkout the movies currently in your shopping cart.\nEnter 6 to view your order history.\nEnter 7 to edit your account.\nEnter 8 to delete your account.\nEnter 9 to sign out.\n";
+    cin >> Command;
+    // Customer wants to view all of the movies.
+    if (Command == "1")
+        inventory.Display();
+    // Customer wants to view all the items in their cart.
+    if (Command == "2")
+        cart.Display();
+    // Customer wants to add a movie to their cart.
+    if (Command == "3")
+    {
+        inventory.Display();
+        cout << "Enter the id of the movie you would like to add to your cart: ";
+        cin >> MovieID;
+        Add_To_Cart(MovieID);
+    }
+    // Customer wants to remove the movie from their cart.
+    if (Command == "4")
+    {
+        inventory.Display();
+        cout << "Enter the id of the movie you would like to remove from your cart: ";
+        cin >> MovieID;
+        cart.Remove(MovieID);
+    }
+    // Customer wants to checkout.
+    if (Command == "5")
+       cart.Checkout(); 
+    // Customer wants to see their order history.
+    if (Command == "6")
+    {
+        Customer customer;
+        customer.Display_History();
+    }
+    // Customer wants to edit their account.
+    if (Command == "7")
+    {
+        
+    }
+    // Customer wants to delete their account.
+    if (Command == "8")
+        Delete_Account();
+    // Customer wants to sign out of their account.
+    if (Command == "9")
+        Signout();
+}
+
+// Menu that shows up at the beginning of the program.
+void Start_Menu()
+{
+    string Command;
+    Customer customer;
+    string Email;
+    string Name;
+    string Password;
+    string Address;
+
+    cout << "\nSTART MENU:\nEnter 1 to create an account.\nEnter 2 to sign in to your account.\nEnter 3 to exit the app.\n";
+    cin >> Command;
+
+    // Creating the user's account and putting the customer information in the customer class.
+    if (Command == "1") 
+    {
+        if (!Signed_In())
+        {
+            cout << "What's your name?";
+            cin >> Name;
+            customer.Name = Name;
+            cout << "What's your email?";
+            cin >> Email;
+            customer.Email = Email;
+            cout << "What would you like your password to be?";
+            cin >> Password;
+            customer.Password = Password;
+            cout << "What is your address?";
+            cin >> Address;
+            customer.Address = Address;
+            if (Signup(Email, customer))
+            {
+                Sign_In_Menu();
+                return;
+            }
+        }
+        else cout << "You're already signed in.";
+    }
+    // Signing the user into their account.
+    if (Command == "2")
+    {
+        if (!Signed_In())
+        {
+            cout << "What's your email?";
+            cin >> Email;
+            customer.Email = Email;
+            cout << "What's your password?";
+            cin >> Password;
+            if (Signin(Email, Password))
+            {
+                Sign_In_Menu();
+                return;
+            }
+        }
+        else cout << "You're already signed in.";
+    }
+    //  User is exiting the program.
+    if (Command == "3")
+    {
+        cout << "Thanks for visiting Amalon, have a wonderful day!";
+        exit(3);
+    }
+}
+
+int main()
+{
+    cout << "Welcome to Amalon, the off-brand Amazon.\n";
+    cout << "For support call 1-800-Definitely-Not-A-Scam or email support@amalon-is-not-a-scam.com.\n ";
+    Start_Menu(); // Brings up the log in menu.
+}
+
+// Run program: Ctrl + F5 or Debug > Start Without Debugging Sign_In_Menu
+// Debug program: F5 or Debug > Start Debugging Sign_In_Menu
+
+// Tips for Getting Started: 
+//   1. Use the Solution Explorer window to add/manage files
+//   2. Use the Team Explorer window to connect to source control
+//   3. Use the Output window to see build output and other messages
+//   4. Use the Error List window to view errors
+//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
+//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
