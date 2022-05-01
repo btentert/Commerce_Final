@@ -22,8 +22,8 @@ class Card
 {
 public:
     string Name_On_Card, Expiration_Date;
-    uint32_t Number;
-    uint64_t CVV;
+    uint64_t Number;
+    uint16_t CVV;
 
     Card()
     {
@@ -499,7 +499,11 @@ bool Signin(string Email, string Password)
             Current_Email = Email;
             return true;
         }
-        else return false;
+        else
+        {
+            cout << "Password Incorrect";
+            return false;
+        }
     }
     cout << "User doesn't exist";
     return false;
@@ -686,7 +690,7 @@ void Load()
                     if (Contains(line, "CardName|"))
                         order.card.Name_On_Card = line.substr(line.find("CardName|") + 9);
                     if (Contains(line, "CardNumber|"))
-                        order.card.Number = stoi(line.substr(line.find("CardNumber|") + 11));
+                        order.card.Number = stoull(line.substr(line.find("CardNumber|") + 11));
                     if (Contains(line, "CardExpiration|"))
                         order.card.Expiration_Date = line.substr(line.find("CardExpiration|") + 15);
                     if (Contains(line, "CardCVV|"))
@@ -732,6 +736,7 @@ void Load()
                     if (line == "Customer")
                     {
                         Case = 1;
+                        customer = Customer();
                     }
             }
 
@@ -916,7 +921,7 @@ void Sign_In_Menu()
                 getline(std::cin, Password);
             }
             cout << "___________________________________________________________\n";
-            cout << "What would you like your new password to be? Please enter a password with at least 10 characters, 4 letters, and 4 numbers.\n";
+            cout << "What would you like your new password to be? Please enter a password with at least 10 characters, a letter, and a number.\n";
             getline(std::cin, Password);
             Customers[Current_Email].Password = Password;
 
@@ -978,7 +983,7 @@ void Sign_In_Menu()
 
             while (CVV.length() != 3 || !Is_Number(CVV))
             {
-                cout << "Your card CVV should be at least 3 digits long.\n";
+                cout << "Your card CVV should be at 3 digits long.\n";
                 getline(std::cin, CVV);
             }
             cout << "___________________________________________________________\n";
@@ -1139,6 +1144,7 @@ void Main_Menu()
             {
                 Save();
                 Current_Menu = Sign_In_Menu;
+                Current_Email = Email;
                 Sign_In_Menu();
                 return;
             }
