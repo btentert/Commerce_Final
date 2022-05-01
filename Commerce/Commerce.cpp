@@ -104,8 +104,8 @@ public:
 
     void Update(uint64_t ID, uint64_t Amount)
     {
-        if(Exists(ID))
-        Products[ID].Quantity_Left = Amount;
+        if (Exists(ID))
+            Products[ID].Quantity_Left = Amount;
     }
 
     // Finds the user's movie ID they entered.
@@ -161,6 +161,7 @@ public:
             cout << "\nName: " << movie.Name;
             cout << "\nCost: $" << movie.Cost;
             cout << "\nQuantity: " << Quantity;
+            cout << "\nTotal Cost: $" << movie.Cost * (float)Quantity << " | (" << Quantity << "*" << movie.Cost << ")";
             cout << "\nGenre: " << movie.genre;
             cout << "\nDescription: " << movie.Description << "\n";
         }
@@ -168,7 +169,7 @@ public:
 
     string Movie_Name(uint64_t ID)
     {
-       return Products[ID].Name;
+        return Products[ID].Name;
     }
     // Removes that movie from the inventory because the customer has purchased it.
     bool Buy(uint64_t Product_ID)
@@ -203,7 +204,7 @@ public:
 
     map <uint64_t, uint16_t> Products; // Products tied to quantity ordered.
     float Total_Cost; // Complete cost of the cart.
-    string Date;
+    string Date, Address;
     // Card Information.
     Card card;
 
@@ -212,11 +213,12 @@ public:
 
     }
 
-    Order(map <uint64_t, uint16_t> Products, float Total_Cost, Card card)
+    Order(map <uint64_t, uint16_t> Products, float Total_Cost, Card card, string Delivery)
     {
         this->Products = Products;
         this->Total_Cost = Total_Cost;
         this->card = card;
+        this->Address = Delivery;
         Date = Current_Date();
     }
 
@@ -224,14 +226,17 @@ public:
     {
         cout << "\nOrder Summary\n----------------------------------------------------------------------------------------\n";
         cout << "Date ordered was " << Date << "\n";
-        
+        cout << "Delivery Address:" << Address << endl << "Expected Delivery Date: Never! Nonexistent!" << endl;
         cout << card.Name_On_Card << "'s card was used and the card number was " << card.Number << "\n";
         cout << "Here's all of the movies you ordered\n\n";
 
         for (const auto& pair : Products)
         {
             cout << "ID: " << pair.first << endl;
-            cout << "Name:" << inventory.Movie_Name(pair.first) << "\nCost:$" << inventory.Movie_Price(pair.first) << "\nTotal Cost:$" << inventory.Movie_Price(pair.first) * pair.second << "\n\n";
+            cout << "Name:" << inventory.Movie_Name(pair.first);
+            cout << "\nCost Per Movie: $" << inventory.Movie_Price(pair.first);
+            cout << "\nQuantity: " << pair.second;
+            cout << "\nTotal Cost: $" << inventory.Movie_Price(pair.first) * pair.second << " | (" << pair.second << "*" << inventory.Movie_Price(pair.first) << ")\n";
         }
 
 
@@ -246,7 +251,7 @@ class Cart
 public:
     map <uint64_t, uint16_t> Movies_In_Cart; // Movie ID linked to the quantity.
     // Choice 2 in the sign in menu: displays the items in the cart.
-    
+
     // Choice 3 in the sign in menu: 
         // Function that lets the user add one movie to the cart.
     void Add(uint64_t Product_ID)
@@ -259,8 +264,8 @@ public:
     void Add(uint64_t Product_ID, uint16_t Quantity)
     {
         if (!Exists(Product_ID))
-        Movies_In_Cart.insert(pair<uint64_t, uint16_t>(Product_ID, Quantity));
-        else Movies_In_Cart[Product_ID]+=Quantity;
+            Movies_In_Cart.insert(pair<uint64_t, uint16_t>(Product_ID, Quantity));
+        else Movies_In_Cart[Product_ID] += Quantity;
     }
     // Choice 4 in the sign in menu: function that removes an item from the customer's shopping cart.
     void Remove(uint64_t Product_ID)
@@ -310,17 +315,17 @@ public:
     string Name, Address, Email, Password;
     uint32_t Phone_Number;
     Card card;
-    
+
 
     Cart cart; // Object of the shopping cart class.
-    vector<Order> Order_History; 
+    vector<Order> Order_History;
 
     Order Checkout()
     {
-        Order order = Order(cart.Movies_In_Cart, cart.Total(), card);
-            
-            Order_History.push_back(order);
-            cart.Clear();
+        Order order = Order(cart.Movies_In_Cart, cart.Total(), card, Address);
+
+        Order_History.push_back(order);
+        cart.Clear();
         return order;
     }
 
@@ -364,10 +369,14 @@ bool Customer_Exists(string Email)
     return Customers.find(Email) != Customers.end();
 }
 
-void Display_Cart()
+bool Display_Cart()
 {
+    bool notEmpty;
+
     if (!Customers[Current_Email].cart.Is_Cart_Empty())
     {
+        notEmpty = 1;
+
         cout << "Here's a list of movies in your cart\n----------------------------------------------------------------------------------------\n";
         for (const auto& pair : Customers[Current_Email].cart.Movies_In_Cart)
         {
@@ -375,18 +384,18 @@ void Display_Cart()
         }
         cout << "----------------------------------------------------------------------------------------\nYour Cart Total is $" << Customers[Current_Email].cart.Total() << endl;
     }
-    else cout << "Your cart is empty\n";
-    
+    else { cout << "Your cart is empty\n"; notEmpty = 0; }
 
+    return notEmpty;
 }
 
 // Choice 3 in the sign in menu: customer wants to add an item to their shopping cart.
-bool Add_To_Cart(uint64_t Product_ID,uint16_t Quantity)
+bool Add_To_Cart(uint64_t Product_ID, uint16_t Quantity)
 {
     // If the customer exists,
     if (Signed_In())
     {
-        Customers[Current_Email].cart.Add(Product_ID,Quantity); // Add that movie to the cart.
+        Customers[Current_Email].cart.Add(Product_ID, Quantity); // Add that movie to the cart.
         return true;
     }
     return false;
@@ -394,14 +403,14 @@ bool Add_To_Cart(uint64_t Product_ID,uint16_t Quantity)
 
 void Checkout()
 {
-    
+
     if (!Customers[Current_Email].cart.Is_Cart_Empty())
     {
         for (const auto& pair : Customers[Current_Email].cart.Movies_In_Cart)
         {
             inventory.Buy(pair.first, pair.second);
         }
-        
+
         "Thanks for ordering, your order details are below.\n";
         Customers[Current_Email].Checkout().Show();
     }
@@ -452,9 +461,9 @@ bool Delete_Account()
         string Name = Customers[Current_Email].Name;
         string Email = Current_Email;
         Signout();
-        Customers.erase(Email);  
+        Customers.erase(Email);
         cout << Name << ", your account has been deleted.\n";
-         // Deletes their email.
+        // Deletes their email.
         Save();
         return true;
     }
@@ -465,7 +474,7 @@ bool Delete_Account()
 
 
 // Choice 1 on the start up menu: customer creating their account.
-bool Signup(string Email,Customer customer)
+bool Signup(string Email, Customer customer)
 {
     bool New = !Customer_Exists(Email); // Customer doesn't already have an account.
     // If the user doesn't already have an account,
@@ -490,11 +499,7 @@ bool Signin(string Email, string Password)
             Current_Email = Email;
             return true;
         }
-        else
-        {
-            cout << "Password Incorrect";
-            return false;
-        }
+        else return false;
     }
     cout << "User doesn't exist";
     return false;
@@ -534,6 +539,7 @@ bool String_Has_Letter_And_Number(string Search, uint16_t Min_Letters, uint16_t 
     return Alphabets >= Min_Letters && Numbers >= Min_Numbers;
 
 }
+
 
 void Save()
 {
@@ -575,7 +581,7 @@ void Save()
             for (const auto& pair : pair.second.Order_History)
             {
                 customersfile << "\nOrder\n{\n";
-                customersfile << "Date|" << pair.Date << "\nCost|" << pair.Total_Cost << "\nCardName|" << pair.card.Name_On_Card << "\nCardNumber|" << pair.card.Number << "\nCardCVV|" << pair.card.CVV << "\nCardExpiration|" << pair.card.Expiration_Date;
+                customersfile << "Date|" << pair.Date << "\nDelivery|" << pair.Address << "\nCost|" << pair.Total_Cost << "\nCardName|" << pair.card.Name_On_Card << "\nCardNumber|" << pair.card.Number << "\nCardCVV|" << pair.card.CVV << "\nCardExpiration|" << pair.card.Expiration_Date;
                 customersfile << "\nMovies\n{\n";
                 for (const auto& pair : pair.Products)
                 {
@@ -587,7 +593,7 @@ void Save()
         }
         customersfile << "\n}\n";
 
-        
+
     }
     customersfile.close();
 }
@@ -603,8 +609,8 @@ void Load()
             std::string line;
             while (std::getline(Command_File, line))
             {
-                if(Contains(line,"|"))
-                inventory.Update(stoi(line.substr(0, line.find("|") )), stoi(line.substr(line.find("|") + 1)));
+                if (Contains(line, "|"))
+                    inventory.Update(stoi(line.substr(0, line.find("|"))), stoi(line.substr(line.find("|") + 1)));
             }
 
             Command_File.close();
@@ -644,7 +650,7 @@ void Load()
                     if (Contains(line, "Address|"))
                         customer.Address = line.substr(line.find("Address|") + 8);
                     if (Contains(line, "CardName|") && line.find("CardName|") == 0)
-                        customer.card.Name_On_Card= line.substr(line.find("CardName|") + 9);
+                        customer.card.Name_On_Card = line.substr(line.find("CardName|") + 9);
                     if (Contains(line, "CardNumber|"))
                         customer.card.Number = stoull(line.substr(line.find("CardNumber|") + 11));
                     if (Contains(line, "CardExpiration|"))
@@ -670,11 +676,13 @@ void Load()
                 }
                 if (Case == 2)
                 {
-                    
+
                     if (Contains(line, "Cost|"))
                         order.Total_Cost = stof(line.substr(line.find("Cost|") + 5));
                     if (Contains(line, "Date|"))
                         order.Date = line.substr(line.find("Date|") + 5);
+                    if (Contains(line, "Delivery|"))
+                        order.Address = line.substr(line.find("Delivery|") + 9);
                     if (Contains(line, "CardName|"))
                         order.card.Name_On_Card = line.substr(line.find("CardName|") + 9);
                     if (Contains(line, "CardNumber|"))
@@ -721,10 +729,10 @@ void Load()
 
                 }
                 else
-                if (line == "Customer")
-                {
-                    Case = 1;
-                }
+                    if (line == "Customer")
+                    {
+                        Case = 1;
+                    }
             }
 
             Customer_File.close();
@@ -746,213 +754,17 @@ void Load()
 
 auto Current_Menu = Main_Menu;
 
-
-
-
-// Menu that shows up after the user has signed in.
-void Sign_In_Menu()
+bool Is_Number_(string line, uint64_t& number)
 {
-    
-    string Command;
-    
-    cout << "\nEnter 1 to view all the movies in inventory.\nEnter 2 to view all items in your shopping cart.\nEnter 3 to add a movie to your shopping cart.\nEnter 4 to remove a movie from your shopping cart.\nEnter 5 to checkout the movies currently in your shopping cart.\nEnter 6 to view your order history.\nEnter 7 to edit your account.\nEnter 8 to delete your account.\nEnter 9 to sign out.\nEnter 10 to exit.\n";
-    getline(cin,Command);
-    // Customer wants to view all of the movies.
-    if (Command == "1")
-        inventory.Display();
-    // Customer wants to view all the items in their cart.
-    if (Command == "2")
-        Display_Cart();
-    // Customer wants to add a movie to their cart.
-    if (Command == "3")
+    try
     {
-        uint64_t ID;
-        inventory.Display();
-        cout << "Enter the id of the movie you would like to add to your cart: \n";
-        cin >> ID;
-
-        while (!inventory.Exists(ID))
-        {
-            cout << "Enter a valid movie id to your cart \n";
-            cin >> ID;
-        }
-
-        while (!inventory.In_Stock(ID))
-        {
-            cout << inventory.Movie_Name(ID) << " is out of stock. Enter a valid movie id that's in stock \n";
-            cin >> ID;
-        }
-
-        uint16_t Quantity;
-        cout << "How many would you like? Type 0 to go back. \n";
-        cin >> Quantity;
-        
-        while (!inventory.Has_Enough(ID, Quantity + Customers[Current_Email].cart.Amount_Of_Movies(ID)))
-        {
-            cout << "Note that stock is limited, you can only have " << inventory.Stock(ID) << " of this in your cart. How many would you like?\n";
-            cin >> Quantity;
-
-        }
-
-        if (Quantity != 0)
-        {
-            Add_To_Cart(ID, Quantity);
-        }
-
-        
+        number = stoull(line);
+        return true;
     }
-    // Customer wants to remove the movie from their cart.
-    if (Command == "4")
+    catch (...)
     {
-        uint64_t ID;
-        Display_Cart();
-        cout << "Enter the id of the movie you would like to remove from your cart: ";
-        cin >> ID;
-
-        while (!In_Cart(ID))
-        {
-            cout << "Enter a valid movie id to remove from your cart: ";
-            cin >> ID;
-        }
-
-        Remove_From_Cart(ID);
-
-        
+        return false;
     }
-    // Customer wants to checkout.
-    if (Command == "5")
-    {
-        string Confirm;
-
-        
-        
-
-        while (Confirm != "yes" && Confirm != "no")
-        {
-            cout << "Type yes to confirm checkout or no to go back\n";
-            cin >> Confirm;
-        }
-
-        if (Confirm == "yes")
-        {
-            Checkout();
-        }
-            
-        
-    }
-        
-    // Customer wants to see their order history.
-    if (Command == "6")
-    {
-        
-        Customers[Current_Email].Display_History();
-    }
-    // Customer wants to edit their account.
-    if (Command == "7")
-    {
-        cout << "\nEnter 1 to change your name.\nEnter 2 to change your email address.\nEnter 3 to change your password.\nEnter 4 to change your shipping address.\nEnter 5 to change your credit/debit card details.\nEnter 6 to go back.\n";
-        string Command;
-        cin >> Command;
-
-        if (Command == "1") cout << "What would you like to change your name to?\n";  cin >> Customers[Current_Email].Name;
-            
-        // Customer wants to view all the items in their cart.
-        if (Command == "2")
-            Display_Cart();
-        // Customer wants to add a movie to their cart.
-        if (Command == "3")
-        {
-            uint64_t ID;
-            inventory.Display();
-            cout << "Enter the id of the movie you would like to add to your cart: \n";
-            cin >> ID;
-
-            while (!inventory.Exists(ID))
-            {
-                cout << "Enter a valid movie id to your cart \n";
-                cin >> ID;
-            }
-
-            while (!inventory.In_Stock(ID))
-            {
-                cout << inventory.Movie_Name(ID) << " is out of stock. Enter a valid movie id that's in stock \n";
-                cin >> ID;
-            }
-
-            uint16_t Quantity;
-            cout << "How many would you like? Type 0 to go back. \n";
-            cin >> Quantity;
-
-            while (!inventory.Has_Enough(ID, Quantity + Customers[Current_Email].cart.Amount_Of_Movies(ID)))
-            {
-                cout << "Note that stock is limited, you can only have " << inventory.Stock(ID) << " of this in your cart. How many would you like?\n";
-                cin >> Quantity;
-
-            }
-
-            if (Quantity != 0)
-            {
-                Add_To_Cart(ID, Quantity);
-            }
-
-
-        }
-        // Customer wants to remove the movie from their cart.
-        if (Command == "4")
-        {
-            uint64_t ID;
-            Display_Cart();
-            cout << "Enter the id of the movie you would like to remove from your cart: ";
-            cin >> ID;
-
-            while (!In_Cart(ID))
-            {
-                cout << "Enter a valid movie id to remove from your cart: ";
-                cin >> ID;
-            }
-
-            Remove_From_Cart(ID);
-
-
-        }
-        // Customer wants to checkout.
-        if (Command == "5")
-        {
-            cout << "Here's your current primary card on file\n";
-            Customers[Current_Email].card.Show();
-
-
-        }
-
-        // Customer wants to see their order history.
-        if (Command == "6")
-        {
-
-        }
-    }
-    // Customer wants to delete their account.
-    if (Command == "8")
-    {
-        Delete_Account(); Current_Menu = Main_Menu;
-    }
-        
-    // Customer wants to sign out of their account.
-    if (Command == "9")
-    {
-        Signout();
-        Current_Menu = Main_Menu;
-    }
-
-    if (Command == "10")
-    {
-        cout << "___________________________________________________________\n";
-        cout << "Thanks for visiting Amalon, have a wonderful day!";
-        exit(3);
-    }
-        
-    Save();
-
-    Current_Menu();
 }
 
 bool Is_Number(string line)
@@ -961,6 +773,260 @@ bool Is_Number(string line)
     strtol(line.c_str(), &p, 10);
     return *p == 0;
 }
+
+//Automatically Saves and loads
+// Menu that shows up after the user has signed in.
+void Sign_In_Menu()
+{
+
+    string Command;
+
+    cout << "\nEnter 1 to view all the movies in inventory.\nEnter 2 to view all items in your shopping cart.\nEnter 3 to add a movie to your shopping cart.\nEnter 4 to remove a movie from your shopping cart.\nEnter 5 to checkout the movies currently in your shopping cart.\nEnter 6 to view your order history.\nEnter 7 to edit your account.\nEnter 8 to view your account details.\nEnter 9 to delete your account.\nEnter 10 to sign out.\nEnter 11 to exit.\n";
+    getline(cin, Command);
+    // Customer wants to view all of the movies. Done
+    if (Command == "1")
+        inventory.Display();
+    // Customer wants to view all the items in their cart. Done
+    if (Command == "2")
+        Display_Cart();
+    // Customer wants to add a movie to their cart. Done
+    if (Command == "3")
+    {
+
+        if (!inventory.In_Stock(1) && !inventory.In_Stock(2) && !inventory.In_Stock(3) && !inventory.In_Stock(4) && !inventory.In_Stock(5) && !inventory.In_Stock(6) && !inventory.In_Stock(7) && !inventory.In_Stock(8) && !inventory.In_Stock(9) && !inventory.In_Stock(10) && !inventory.In_Stock(11))
+        {
+            cout << "\nSorry: all our movies are sold out!\n\n";
+        }
+        else
+        {
+            string ID;
+            uint64_t id;
+            inventory.Display();
+            cout << "Enter the id of the movie you would like to add to your cart: \n";
+            getline(cin, ID);
+
+            while (!Is_Number_(ID, id) || !inventory.Exists(id))
+            {
+                cout << "Enter a valid movie id to your cart \n";
+                getline(cin, ID);
+            }
+
+            while (!inventory.In_Stock(id) || !Is_Number_(ID, id))
+            {
+                cout << inventory.Movie_Name(id) << " is out of stock. Enter a valid movie id that's in stock \n";
+                getline(cin, ID);
+            }
+
+            uint64_t Quantity;
+            string quantity;
+            cout << "How many would you like? Type 0 to go back. \n";
+            getline(cin, quantity);
+
+            while (!Is_Number_(quantity, Quantity) || Quantity > 1000 || !inventory.Has_Enough(id, Quantity + Customers[Current_Email].cart.Amount_Of_Movies(id)))
+            {
+                cout << "Note that stock is limited, you can only have " << inventory.Stock(id) << " of this in your cart and you can only add up to 1,000 at time. How many would you like?\n";
+                getline(cin, quantity);
+
+            }
+
+            if (Quantity != 0)
+            {
+                Add_To_Cart(id, Quantity);
+            }
+        }
+    }
+    // Customer wants to remove the movie from their cart. Done
+    if (Command == "4")
+    {
+        string ID;
+        uint64_t id;
+        if (Display_Cart())
+        {
+            cout << "Enter the id of the movie you would like to remove from your cart: \n";
+            getline(cin, ID);
+
+            while (!Is_Number_(ID, id) || id >= UINT32_MAX || !In_Cart(id))
+            {
+                cout << "Enter a valid movie id to remove from your cart: \n";
+                getline(cin, ID);
+            }
+
+            Remove_From_Cart(id);
+        }
+    }
+    // Customer wants to checkout. Done
+    if (Command == "5")
+    {
+        string Confirm;
+
+
+
+        cout << "___________________________________________________________\n";
+        while (Confirm != "yes" && Confirm != "no")
+        {
+            cout << "Type yes to confirm checkout or no to go back\n";
+            cout << "___________________________________________________________\n";
+            getline(cin, Confirm);
+        }
+
+        if (Confirm == "yes")
+        {
+            Checkout();
+        }
+
+
+    }
+
+    // Customer wants to see their order history. Done
+    if (Command == "6")
+    {
+
+        Customers[Current_Email].Display_History();
+    }
+    // Customer wants to edit their account. Done, you shouldn't be able to change the customers registration email becuase it is a key so it should always stay the same.
+    if (Command == "7")
+    {
+        cout << "\nEnter 1 to change your name.\nEnter 2 to change your password.\nEnter 3 to change your shipping address.\nEnter 4 to change your credit/debit card details.\nEnter anything else to go back.\n";
+        cout << "___________________________________________________________\n";
+        string Command;
+        getline(cin, Command);
+
+        //Done
+        if (Command == "1")
+        {
+            cout << "What would you like to change your name to?\n";
+            cout << "___________________________________________________________\n";
+            string Previous = Customers[Current_Email].Name;
+            getline(cin, Customers[Current_Email].Name);
+            cout << "___________________________________________________________\n";
+            cout << "Your name was changed from " << Previous << " to " << Customers[Current_Email].Name << endl;
+        }
+
+        //Done
+        if (Command == "2")
+        {
+            string Password;
+            cout << "___________________________________________________________\nWhat's your old password?\n";
+
+            getline(std::cin, Password);
+
+            while (Password != Customers[Current_Email].Password)
+            {
+                cout << "Incorrect, try agian.\n";
+                getline(std::cin, Password);
+            }
+            cout << "___________________________________________________________\n";
+            cout << "What would you like your new password to be? Please enter a password with at least 10 characters, 4 letters, and 4 numbers.\n";
+            getline(std::cin, Password);
+            Customers[Current_Email].Password = Password;
+
+            while (Password.length() < 10 || !String_Has_Letter_And_Number(Password, 4, 4))
+            {
+                cout << "Please enter a password with at least 10 characters, 4 letters, and 4 numbers.\n";
+                getline(std::cin, Password);
+                Customers[Current_Email].Password = Password;
+            }
+
+            cout << "___________________________________________________________\n";
+
+        }
+
+        //Done
+        if (Command == "3")
+        {
+            string Address;
+            cout << "___________________________________________________________\n";
+
+            cout << "What new address would you like your orders to be delivered to?\n Please enter all relevant info such as State,Street,Unit,Zipcode, etc.\n";
+            getline(std::cin, Address);
+            Customers[Current_Email].Address = Address;
+            cout << "___________________________________________________________\n";
+
+
+        }
+
+        //Done
+        if (Command == "4")
+        {
+            cout << "Here's your current primary card on file\n";
+            Customers[Current_Email].card.Show();
+
+
+            string Name_On_Card, Expiration_Date, Number, CVV;
+            cout << "___________________________________________________________\n";
+
+            cout << "Let's change your card details.\n What's the name on your card\n";
+
+            getline(std::cin, Name_On_Card);
+            cout << "___________________________________________________________\n";
+
+            cout << "What's the expiration date on your card? Enter in #/#/# format\n";
+            getline(std::cin, Expiration_Date);
+
+            cout << "___________________________________________________________\n";
+
+            cout << "What's the number on your card?\n";
+
+            while (Number.length() < 14 || Number.length() > 20 || !Is_Number(Number))
+            {
+                cout << "Your card number should be between 14 - 20 digits long.\n";
+                getline(std::cin, Number);
+            }
+            cout << "___________________________________________________________\n";
+
+            cout << "What's the CVV on your card\n";
+
+            while (CVV.length() != 3 || !Is_Number(CVV))
+            {
+                cout << "Your card CVV should be at least 3 digits long.\n";
+                getline(std::cin, CVV);
+            }
+            cout << "___________________________________________________________\n";
+
+
+            Customers[Current_Email].card = Card(Name_On_Card, stoull(Number), stoi(CVV), Expiration_Date);
+
+        }
+    }
+    //View Account
+    if (Command == "8")
+    {
+        Customer customer = Customers[Current_Email];
+        cout << "\n___________________________________________________________\nAccount Details";
+        cout << "\nName:" << customer.Name << "\nEmail:" << Current_Email << "\nDelivery Address:" << customer.Address;
+        cout << "\n___________________________________________________________\nCredit/Debit Card On File\n";
+
+        customer.card.Show();
+    }
+    // Customer wants to delete their account. Done
+    if (Command == "9")
+    {
+        Delete_Account(); Current_Menu = Main_Menu;
+    }
+
+    // Customer wants to sign out of their account. Done
+    if (Command == "10")
+    {
+        Signout();
+        Current_Menu = Main_Menu;
+    }
+
+    //Exit
+    if (Command == "11")
+    {
+        cout << "___________________________________________________________\n";
+        cout << "Thanks for visiting Amalon, have a wonderful day!";
+        exit(3);
+    }
+
+    Save();
+
+    Current_Menu();
+}
+
+
+
+
 
 // Menu that shows up at the beginning of the program.
 void Main_Menu()
@@ -973,22 +1039,22 @@ void Main_Menu()
     string Address;
 
     cout << "___________________________________________________________\n";
-    cout << "\nAmalon Home Menu\nEnter 1 to create an account.\nEnter 2 to sign in to your account.\nEnter 3 to exit the app.\n";
+    cout << "\nAmalon Home Menu\n\nEnter 1 to create an account.\nEnter 2 to sign in to your account.\nEnter 3 to exit the app.\n";
     cout << "___________________________________________________________\n";
     getline(std::cin, Command);
 
     // Creating the user's account and putting the customer information in the customer class. Done
-    if (Command == "1") 
+    if (Command == "1")
     {
         if (!Signed_In())
         {
-            
-           cout << "___________________________________________________________\n";
-           cout << "What's your name?\n";
-           getline(std::cin, Name);
-           customer.Name = Name;
-           cout << "___________________________________________________________\n";
-            
+
+            cout << "___________________________________________________________\n";
+            cout << "What's your name?\n";
+            getline(std::cin, Name);
+            customer.Name = Name;
+            cout << "___________________________________________________________\n";
+
             cout << "Nice to meet you " << Name << ", what would you like your signin email to be?\n";
             getline(std::cin, Email);
             customer.Email = Email;
@@ -996,10 +1062,10 @@ void Main_Menu()
             bool Invalid = !Contains(Email, "@") || Email.find("@") == 0 || Email.find("@") == Email.length() || !Contains(Email, ".") || Email.find(".") < Email.find("@") || Email.find(".") >= Email.length() - 1;
             while (Invalid || Customer_Exists(Email))
             {
-                if(Invalid)
-                cout << "That email doesn't look correct, please enter an email with a correct format.\n";
+                if (Invalid)
+                    cout << "That email doesn't look correct, please enter an email with a correct format.\n";
                 else
-                cout << "There's already an account with that email. Enter another one or go back to signin by entering #.\n";
+                    cout << "There's already an account with that email. Enter another one or go back to signin by entering #.\n";
 
                 getline(std::cin, Email);
                 if (Email == "#")
@@ -1010,11 +1076,11 @@ void Main_Menu()
                 Invalid = !Contains(Email, "@") || Email.find("@") == 0 || Email.find("@") == Email.length() || !Contains(Email, ".") || Email.find(".") < Email.find("@") || Email.find(".") >= Email.length() - 1;
             }
 
-            
+
 
 
             customer.Email = Email;
-            
+
 
             cout << "___________________________________________________________\n";
 
@@ -1022,7 +1088,7 @@ void Main_Menu()
             getline(std::cin, Password);
             customer.Password = Password;
 
-            while (Password.length() < 10 || !String_Has_Letter_And_Number(Password,4,4))
+            while (Password.length() < 10 || !String_Has_Letter_And_Number(Password, 4, 4))
             {
                 cout << "Please enter a password with at least 10 characters, 4 letters, and 4 numbers.\n";
                 getline(std::cin, Password);
@@ -1036,7 +1102,7 @@ void Main_Menu()
             customer.Address = Address;
             cout << "___________________________________________________________\n";
 
-            string Name_On_Card, Expiration_Date,Number,CVV;
+            string Name_On_Card, Expiration_Date, Number, CVV;
 
             cout << "Let's enter credit/debit details now.\n What's the name on your card\n";
 
@@ -1065,7 +1131,7 @@ void Main_Menu()
                 getline(std::cin, CVV);
             }
             cout << "___________________________________________________________\n";
-                
+
 
             customer.card = Card(Name_On_Card, stoull(Number), stoi(CVV), Expiration_Date);
 
@@ -1094,7 +1160,7 @@ void Main_Menu()
                 if (Email == "#")
                     Current_Menu();
                 else
-                customer.Email = Email;
+                    customer.Email = Email;
             }
             cout << "___________________________________________________________\n";
 
@@ -1123,8 +1189,8 @@ void Main_Menu()
         cout << "Thanks for visiting Amalon, have a wonderful day!";
         exit(3);
     }
-    else if(Current_Menu == Main_Menu)
-    Current_Menu();
+    else if (Current_Menu == Main_Menu)
+        Current_Menu();
 }
 
 
@@ -1133,7 +1199,7 @@ int main()
 {
     Load();
     cout << "Welcome to Amalon, the off-brand Amazon.\n";
-    cout << "For support call 1-800-Definitely-Not-A-Scam or email support@amalon-is-not-a-scam.com.\n ";
+    cout << "For support call 1-800-Definitely-Not-A-Scam or email support@amalon-is-not-a-scam.com.\n";
     Current_Menu(); // Brings up the log in menu.
 }
 
