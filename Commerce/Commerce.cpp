@@ -499,11 +499,7 @@ bool Signin(string Email, string Password)
             Current_Email = Email;
             return true;
         }
-        else
-        {
-            cout << "Password Incorrect";
-            return false;
-        }
+        else return false;
     }
     cout << "User doesn't exist";
     return false;
@@ -812,11 +808,11 @@ void Sign_In_Menu()
 
             while (!Is_Number_(ID, id) || !inventory.Exists(id))
             {
-                cout << "Enter a valid movie id to your cart \n";
+                cout << "Enter a valid movie id to add to your cart \n";
                 getline(cin, ID);
             }
 
-            while (!inventory.In_Stock(id) || !Is_Number_(ID, id))
+            while (!Is_Number_(ID, id) || !inventory.In_Stock(id))
             {
                 cout << inventory.Movie_Name(id) << " is out of stock. Enter a valid movie id that's in stock \n";
                 getline(cin, ID);
